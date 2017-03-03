@@ -3,7 +3,11 @@ new Vue({
   data: {
     productList: [],
     totalMoney: 0,
-    checkAllFlag: false
+    checkAllFlag: false,
+    delFlag: false,
+    curPro: '',
+    curIndex: '',
+    hrefFlag: false
   },
   mounted: function() {
     this.$nextTick(function() {
@@ -13,9 +17,7 @@ new Vue({
   methods: {
     cartView: function() {
       var _this = this;
-      this.$http.get("data/cart.json", {
-          "id": 123
-        })
+      this.$http.get("data/cart.json")
         .then(function(res) {
           _this.productList = res.body.result.list;
           _this.totalMoney = res.body.result.totalMoney;
@@ -30,6 +32,7 @@ new Vue({
           product.productQuentity = 1;
         }
       }
+      this.calcTotalPrice();
     },
     selectedProdect: function(item) {
       if (typeof item.checked === 'undefined') {
@@ -38,6 +41,7 @@ new Vue({
       } else {
         item.checked = !item.checked;
       }
+      this.calcTotalPrice();
     },
     checkAll: function(flag) {
       this.checkAllFlag = flag;
@@ -49,11 +53,52 @@ new Vue({
           item.checked = _this.checkAllFlag;
         }
       })
+      this.calcTotalPrice()
+    },
+    calcTotalPrice: function() {
+      var _this = this;
+      this.totalMoney = 0;
+      this.productList.forEach(function(item, index) {
+        if (item.checked) {
+          _this.totalMoney += item.productQuentity * item.productPrice;
+        }
+      })
+    },
+    delConfirm: function(item, index) {
+      this.delFlag = true;
+      this.curPro = item;
+      this.curIndex = index;
+    },
+    delPro: function() {
+      this.delFlag = false;
+      this.productList.splice(this.index, 1);
+      // 或者使用indexOf获取索引值
+      // var index = this.productList.indexOf(this.curPro);
+      // this.productList.splice(index, 1);
+    },
+    openHref: function() {
+      if (this.totalMoney === 0) {
+        this.hrefFlag = true;
+      } else {
+        window.location.href = './address.html';
+      }
     }
   },
+  // computed: {
+  //   calcTotalPrice: function() {
+  //     var _this = this;
+  //     this.productList.forEach(function(item, index) {
+  //       if (item.checked) {
+  //         // _this.totalMoney = 0;
+  //         return _this.totalMoney += item.productQuentity * item.productPrice;
+  //       }
+  //     })
+  //   }
+  //
+  // },
   filters: {
-    formatMoney: function(value) {
-      return '￥ ' + value.toFixed(2);
+    formatMoney: function(value, type) {
+      return '￥ ' + value.toFixed(2) + type;
     }
   }
 });
